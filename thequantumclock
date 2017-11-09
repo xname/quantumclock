@@ -1,0 +1,179 @@
+/* The Quantum Clock by xname 
+   London 2011-12
+   Queen Mary - University of London
+   reality depends on the perspective of the observer
+
+   Thanks to Clock Tick Demonstration
+   By Matt Mets, completed in 2008 (public domain) 
+                                                       */
+ 
+// Board Setup 
+extern unsigned long timer0_overflow_count;
+  
+int clockA = 2;          // Clock wires
+int clockB = 3;          // Order is not important.
+ 
+int tickPin = clockA;    // This keeps track of which clock pin should be fired next.
+
+// Quantum Variables 
+int quanTime = 1000;
+int schroedTime = 1500;
+int heisenTime = 10;
+
+
+// Sensors 
+int lightPin = A0; // photoresistor 
+int lightLevel = 0;
+
+int presPin1 = A4; // proximity sensor1
+int presPin2 = A5; // proximity sensor2 
+
+int presValue1 = 0;
+int presValue2 = 0; 
+
+/* 
+      "...quantum theory reminds us, as Bohr has put it, 
+      of the old wisdom that when searching for harmony 
+      in life one must never forget that in the drama 
+      of existence we are ourselves both players and 
+      spectators"
+                  Heisenmberg: 1934
+                                                      */
+
+ 
+// IO ports
+void setup()
+{
+  pinMode(clockA, OUTPUT);
+  pinMode(clockB, OUTPUT);
+ 
+  digitalWrite(clockA, LOW);
+  digitalWrite(clockB, LOW);
+  
+  // light sensor
+//  pinMode(ledPin, OUTPUT); 
+  Serial.begin(9600);
+  
+}
+  
+// Clock
+void doTick() {
+  
+//  senseLight();
+  
+  // Energize the electromagnet in the wrong direction (at least in my clock)
+  digitalWrite(tickPin, HIGH);
+  delay(heisenTime);
+  digitalWrite(tickPin, LOW);  
+ 
+  // Switch the direction so it will fire in the opposite way next time.
+ if (tickPin == clockA)
+  {
+    tickPin = clockB;
+  } else {
+    tickPin = clockA;
+   } 
+}
+
+// Makes the clock flip
+/* void doFlip() {
+  
+  senseLight();
+ 
+  // Energize the electromagnet in the correct direction.
+  // It's ticking two seconds at a time, not sure why
+  digitalWrite(tickPin, HIGH);
+  delay(10);
+  digitalWrite(tickPin, LOW);  
+  delay(10);
+
+} */
+
+void senseLight(){
+    lightLevel = analogRead(lightPin); //Read the lightlevel
+    
+    // if you think you don't have time, maybe there's not enough light in your life
+    lightLevel = constrain(lightLevel, 0, 700);
+    
+    if (lightLevel >= 600) {
+      quanTime = 500;  // time goes faster when there is no light;
+
+    }
+    else if (lightLevel < 600 && lightLevel > 250){
+      quanTime = 1000; 
+ 
+    }
+
+    else if (lightLevel < 250){
+      quanTime = 1500;
+
+    }
+}
+
+void sensePresence(){
+  presValue1 = analogRead(presPin1);
+  presValue2 = analogRead(presPin2); 
+  
+  if(presValue1 > 250){
+    heisenTime = 10;
+  }
+  else 
+    heisenTime = 5;
+    
+ if(presValue2 > 250){
+  /*  doFlip(); */
+      heisenTime = 25;
+  }
+/*  else
+    doTick(); */
+      
+  
+}
+ 
+/* 
+    "...the transition from the actual to the possible
+      takes place during the act of observation..."
+                      Heisenberg: 1934
+                                                  */
+                      
+ 
+// Main loop
+void loop()
+{
+  unsigned long startTime = millis();
+  unsigned long temp;
+  
+  // Millis overflows after approx 50 days
+  // if you need corretion for this, check TimingRollover on arduino playground
+  while (true)
+  {
+    startTime += quanTime;  // normal speed
+
+ 
+    // Wait until a second has passed.  
+    while (startTime - millis() > 0) {
+      senseLight();
+      sensePresence();
+    }  /// delay is no good here because it completely stops the processor
+
+    doTick();  
+    Serial.println("Delay is HeisenTime");
+    Serial.println(heisenTime);
+    Serial.println("Tick frequency is quanTime");
+    Serial.println(quanTime);  
+    Serial.println("Light level is lightLevel");
+    Serial.println(lightLevel); 
+    Serial.println("Proximity sensor 1:");
+    Serial.println(presValue1); 
+    Serial.println("Proximity sensor 2:"); 
+    Serial.println(presValue2);
+      
+  }
+}
+
+/*  
+     "What we cannot speak about
+     we must pass over in silence."
+     Ludwig Wittgenstein. Tractatus Logico-Philosophicus. 1922.
+
+*/
